@@ -1,0 +1,43 @@
+# Production deploy on the VPS: `docker compose up -d --build`.
+# Expects the shared Traefik instance on the external "proxy" network
+# with a certificate resolver named "le".
+services:
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    mem_limit: ${FRONTEND_MEM_LIMIT:-64m}
+    networks: [proxy]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.account.rule=Host(`account.teaz.pro`)
+      - traefik.http.routers.account.tls.certresolver=le
+      - traefik.http.services.account.loadbalancer.server.port=80
+      # Shown and controllable in Teaz Pulse.
+      - pro.teaz.pulse.app=Account
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    mem_limit: ${BACKEND_MEM_LIMIT:-384m}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      # Heap follows mem_limit; the periodic G1 cycle hands idle memory back to the host.
+      JAVA_TOOL_OPTIONS: "-XX:+UseG1GC -XX:MaxRAMPercentage=75 -XX:InitialRAMPercentage=10 -XX:G1PeriodicGCInterval=60000"
+    volumes:
+      - files:/data/files
+    networks: [proxy]
+    labels:
+      - traefik.enable=true
+      # Same host, /api only; Traefik prefers this longer rule over the frontend's.
+      - traefik.http.routers.account-api.rule=Host(`account.teaz.pro`) && PathPrefix(`/api`)
+      - traefik.http.routers.account-api.tls.certresolver=le
+      - traefik.http.services.account-api.loadbalancer.server.port=8080
+      - pro.teaz.pulse.app=Account
+
+volumes:
+  # Profile pictures, the only copy: back this up.
+  files:
+
+networks:
+  proxy:
+    external: true
