@@ -84,14 +84,16 @@ come from **`teaz_pro_ui`** (`@teeetime/teaz-pro-ui`, pinned to a tag in
 ## Auth
 
 - Frontend `frontend/src/auth/`: Keycloak (`.env.production`: `auth.teaz.pro`,
-  realm `teazpro`, client `account`) in builds, mock user in `npm run dev`.
+  realm `teazpro`, client `teaz-account`) in builds, mock user in `npm run dev`.
 - Backend `backend/src/main/java/pro/teaz/account/security/`: Bearer JWT
   required with the `prod` profile, except for reading pictures; everything
   permitted otherwise. Any realm user may use Account, no extra role.
 
 Keycloak setup (realm `teazpro`):
 
-1. Client `account`, as in the Auth section of `teaz_pro/docs/TECH_STACK.md`.
+1. Client `teaz-account`, as in the Auth section of `teaz_pro/docs/TECH_STACK.md`.
+   Unlike other apps, the id isn't the app's name: every realm already has a
+   built-in client `account` (Keycloak's Account Console and REST API).
 2. **Realm settings → Login → Edit username** on, otherwise `UPDATE_PROFILE`
    doesn't offer the username.
 3. **Authentication → Required actions:** `Update Password`, `Configure OTP`
